@@ -1,5 +1,6 @@
 import asyncio
 
+from datetime import datetime
 from src.core.utility.Utility import Utility
 from src.core.command.base.BaseCommand import BaseCommand
 
@@ -28,6 +29,8 @@ class ShellCommand(BaseCommand):
         await self.run(' '.join(command))
 
     async def run(self, cmd) -> None:
+        time = datetime.now()
+        timestamp = time.strftime("%d-%b-%Y (%H:%M:%S)")
         proc = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -35,13 +38,15 @@ class ShellCommand(BaseCommand):
         stdout, stderr = await proc.communicate()
         if stdout:
             await self.print_queue.put('')
-            await self.print_queue.put(('success', f"[+] Command: '{cmd}'\n"))
+            await self.print_queue.put(('success', f"[+] Command Data: '{cmd}'"))
+            await self.print_queue.put(('success', f"[+] Command Timestamp: {timestamp}\n"))
             await self.print_queue.put(stdout.decode())
-            await self.print_queue.put(('success', f"[-] Command: '{cmd}'"))
+            await self.print_queue.put(('success', f"[-] Command End: '{cmd}'"))
             await self.print_queue.put('')
         if stderr:
             await self.print_queue.put('')
-            await self.print_queue.put(('error', f"--=[START CMD: '{cmd}' ]\n"))
+            await self.print_queue.put(('error', f"[+] Command Data: '{cmd}'"))
+            await self.print_queue.put(('error', f"[+] Command Timestamp: {timestamp}\n"))
             await self.print_queue.put(stderr.decode())
-            await self.print_queue.put(('error', f"--=[END CMD: '{cmd}' ]"))
+            await self.print_queue.put(('error', f"[-] Command End: '{cmd}'"))
             await self.print_queue.put('')
